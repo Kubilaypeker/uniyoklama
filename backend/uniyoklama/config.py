@@ -76,7 +76,7 @@ def load_config(cfg_path: str) -> AppConfig:
         debug=_parse_bool(app.get("debug", "false"), False),
         host=app.get("host", "127.0.0.1"),
         port=int(app.get("port", "5000")),
-        cors_origins=cors_origins or ["http://localhost:5173"],
+        cors_origins=["http://localhost:5173", "https://uniyoklama.vercel.app"],
         timezone=app.get("timezone", "Europe/Istanbul"),
 
         db_url=db.get("url"),

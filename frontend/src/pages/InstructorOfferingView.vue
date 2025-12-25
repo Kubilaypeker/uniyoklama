@@ -1,50 +1,84 @@
 <template>
-  <div class="space-y-8">
-    <div v-if="auth.user?.role !== 'INSTRUCTOR'" class="alert alert-error">
-      <span>Bu sayfa sadece INSTRUCTOR içindir.</span>
+  <div class="space-y-6">
+    <div v-if="auth.user?.role !== 'INSTRUCTOR'" class="alert alert-error rounded-xl shadow-sm">
+      <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+      <span>Bu sayfa sadece öğretim görevlileri içindir.</span>
     </div>
 
-    <div v-else class="space-y-4">
-      <div class="flex items-start justify-between gap-4">
+    <div v-else class="space-y-6">
+      <!-- Header -->
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 class="text-2xl font-semibold">{{ offeringTitle }}</h1>
-          <p class="text-sm opacity-80">
+          <h1 class="text-2xl font-bold text-gray-800">{{ offeringTitle }}</h1>
+          <p class="text-gray-500 text-sm mt-1">
             Oturumlar önceden oluşturulur. Derste sadece ilgili oturumu <b>Aç</b> → QR göster → öğrenciler konum
             doğrulamayla yoklamaya girer.
           </p>
         </div>
 
         <div class="flex gap-2">
-          <RouterLink class="btn btn-sm" to="/instructor">← Derslerim</RouterLink>
-          <button class="btn btn-sm btn-primary" :disabled="loading" @click="refreshAll">
+          <RouterLink class="btn btn-ghost gap-2" to="/instructor">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+            </svg>
+            Derslerim
+          </RouterLink>
+          <button class="btn btn-primary gap-2" :disabled="loading" @click="refreshAll">
             <span v-if="loading" class="loading loading-spinner loading-sm"></span>
+            <svg v-else xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
             Yenile
           </button>
         </div>
       </div>
 
-      <div v-if="errorMsg" class="alert alert-error">
+      <!-- Error Alert -->
+      <div v-if="errorMsg" class="alert alert-error rounded-xl shadow-sm">
+        <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
         <span>{{ errorMsg }}</span>
       </div>
 
-      <div class="card bg-base-100 shadow-sm">
-        <div class="card-body">
-          <div class="flex items-start justify-between gap-4">
-            <div>
-              <h2 class="card-title">Ders Programı (Meeting Pattern)</h2>
-              <p class="text-xs opacity-70">
-                Buradan haftalık ders gün/saatini ekleyebilirsin. Ekledikten sonra oturumlar otomatik üretilir.
-              </p>
+      <!-- Meeting Pattern Card -->
+      <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-purple-50 to-transparent">
+          <div class="flex items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+              <div class="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <div>
+                <h2 class="text-lg font-bold text-gray-800">Ders Programı</h2>
+                <p class="text-xs text-gray-500">Haftalık ders gün/saatini ekleyebilirsin. Ekledikten sonra oturumlar otomatik üretilir.</p>
+              </div>
             </div>
-            <button class="btn btn-sm" :disabled="loading" @click="generateSessions">
+            <button 
+              class="btn btn-primary btn-sm gap-2" 
+              :disabled="loading" 
+              @click="generateSessions"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+              </svg>
               Oturumları Oluştur
             </button>
           </div>
+        </div>
 
-          <div class="grid gap-3 md:grid-cols-4 mt-3">
-            <label class="form-control">
-              <div class="label"><span class="label-text">Gün</span></div>
-              <select class="select select-bordered" v-model.number="mpWeekday">
+        <div class="p-6">
+          <!-- Add Pattern Form -->
+          <div class="grid gap-4 md:grid-cols-4">
+            <div class="form-control">
+              <label class="label pb-1">
+                <span class="label-text font-medium text-gray-700">Gün</span>
+              </label>
+              <select class="select select-bordered w-full h-12 rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20" v-model.number="mpWeekday">
                 <option :value="0">Pazartesi</option>
                 <option :value="1">Salı</option>
                 <option :value="2">Çarşamba</option>
@@ -53,46 +87,78 @@
                 <option :value="5">Cumartesi</option>
                 <option :value="6">Pazar</option>
               </select>
-            </label>
+            </div>
 
-            <label class="form-control">
-              <div class="label"><span class="label-text">Başlangıç</span></div>
-              <input class="input input-bordered" type="time" v-model="mpStart" />
-            </label>
+            <div class="form-control">
+              <label class="label pb-1">
+                <span class="label-text font-medium text-gray-700">Başlangıç</span>
+              </label>
+              <input class="input input-bordered w-full h-12 rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20" type="time" v-model="mpStart" />
+            </div>
 
-            <label class="form-control">
-              <div class="label"><span class="label-text">Bitiş</span></div>
-              <input class="input input-bordered" type="time" v-model="mpEnd" />
-            </label>
+            <div class="form-control">
+              <label class="label pb-1">
+                <span class="label-text font-medium text-gray-700">Bitiş</span>
+              </label>
+              <input class="input input-bordered w-full h-12 rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20" type="time" v-model="mpEnd" />
+            </div>
 
             <div class="flex items-end">
-              <button class="btn btn-success w-full" :disabled="loading" @click="addMeetingPattern">
+              <button class="btn btn-success w-full h-12 rounded-xl gap-2" :disabled="loading" @click="addMeetingPattern">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                </svg>
                 Program Ekle
               </button>
             </div>
           </div>
 
-          <div class="divider my-3"></div>
-
-          <div class="overflow-x-auto">
-            <table class="table table-sm">
+          <!-- Meeting Pattern Table -->
+          <div class="mt-6 overflow-x-auto">
+            <table class="table w-full">
               <thead>
-                <tr>
-                  <th>Gün</th>
-                  <th>Saat</th>
-                  <th></th>
+                <tr class="bg-gray-50">
+                  <th class="rounded-tl-lg">Gün</th>
+                  <th>Saat Aralığı</th>
+                  <th class="text-right rounded-tr-lg">İşlem</th>
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="p in meetingPatterns" :key="p.id">
-                  <td>{{ weekdayLabel(p.weekday) }}</td>
-                  <td>{{ p.starts_time }} - {{ p.ends_time }}</td>
+                <tr v-for="p in meetingPatterns" :key="p.id" class="hover:bg-gray-50 transition-colors">
+                  <td>
+                    <div class="flex items-center gap-2">
+                      <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+                        <span class="text-xs font-bold text-purple-600">{{ weekdayLabel(p.weekday).slice(0, 2) }}</span>
+                      </div>
+                      <span class="font-medium">{{ weekdayLabel(p.weekday) }}</span>
+                    </div>
+                  </td>
+                  <td>
+                    <span class="badge badge-ghost gap-1 px-3 py-2">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      {{ p.starts_time }} - {{ p.ends_time }}
+                    </span>
+                  </td>
                   <td class="text-right">
-                    <button class="btn btn-ghost btn-xs" :disabled="loading" @click="deleteMeetingPattern(p.id)">Sil</button>
+                    <button class="btn btn-ghost btn-sm text-error hover:bg-error/10" :disabled="loading" @click="deleteMeetingPattern(p.id)">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                      Sil
+                    </button>
                   </td>
                 </tr>
                 <tr v-if="meetingPatterns.length === 0">
-                  <td colspan="3" class="text-center text-sm opacity-70">Henüz program eklenmedi.</td>
+                  <td colspan="3" class="text-center py-8">
+                    <div class="flex flex-col items-center gap-2 text-gray-400">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                      <span class="text-sm">Henüz program eklenmedi</span>
+                    </div>
+                  </td>
                 </tr>
               </tbody>
             </table>
@@ -100,127 +166,240 @@
         </div>
       </div>
 
-      <div class="grid gap-4 lg:grid-cols-3">
-        <div class="card bg-base-100 shadow-sm lg:col-span-1">
-          <div class="card-body">
-            <h2 class="card-title">Oturumlar</h2>
-            <p class="text-xs opacity-70">Bugünü bulup seçmek için listeyi kullan.</p>
+      <!-- Sessions Grid -->
+      <div class="grid gap-6 lg:grid-cols-3">
+        <!-- Sessions List Card -->
+        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden lg:col-span-1">
+          <div class="px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-blue-50 to-transparent">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                </svg>
+              </div>
+              <div>
+                <h2 class="font-bold text-gray-800">Oturumlar</h2>
+                <p class="text-xs text-gray-500">Bugünü bulup seçmek için listeyi kullan</p>
+              </div>
+            </div>
+          </div>
 
-            <div class="divider my-2"></div>
-
-            <div class="space-y-2 max-h-[520px] overflow-auto pr-1">
-              <button
-                v-for="s in sessions"
-                :key="s.id"
-                class="btn btn-sm w-full justify-between"
-                :class="selectedSessionId === s.id ? 'btn-primary' : 'btn-ghost'"
-                @click="selectSession(s.id)"
-              >
-                <span class="text-left">
-                  <div class="font-medium">{{ formatDT(s.starts_at) }}</div>
-                  <div class="text-xs opacity-70">Kayıt: {{ s.attendance_count }}</div>
-                </span>
-                <span class="badge" :class="s.is_open ? 'badge-success' : 'badge-ghost'" style="font-size: 8px">
+          <div class="p-4 space-y-2 max-h-[520px] overflow-auto">
+            <button
+              v-for="s in sessions"
+              :key="s.id"
+              class="w-full p-3 rounded-xl border-2 transition-all duration-200 text-left"
+              :class="selectedSessionId === s.id 
+                ? 'border-primary bg-primary/5 shadow-sm' 
+                : 'border-gray-100 hover:border-gray-200 hover:bg-gray-50'"
+              @click="selectSession(s.id)"
+            >
+              <div class="flex items-center justify-between gap-3">
+                <div class="flex-1 min-w-0">
+                  <div class="font-semibold text-gray-800 text-sm truncate">{{ formatDT(s.starts_at) }}</div>
+                  <div class="text-xs text-gray-500 mt-1 flex items-center gap-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                    {{ s.attendance_count }} kayıt
+                  </div>
+                </div>
+                <span 
+                  class="badge text-xs"
+                  :class="s.is_open ? 'badge-success text-white' : 'badge-ghost'"
+                >
                   {{ s.is_open ? "Açık" : "Kapalı" }}
                 </span>
-              </button>
+              </div>
+            </button>
 
-              <div v-if="sessions.length === 0 && !loading" class="text-sm opacity-70">
-                Oturum yok. Program ekleyip “Oturumları Oluştur” yap.
+            <div v-if="sessions.length === 0 && !loading" class="p-8 text-center">
+              <div class="flex flex-col items-center gap-2 text-gray-400">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                </svg>
+                <span class="text-sm">Oturum yok</span>
+                <span class="text-xs">Program ekleyip "Oturumları Oluştur" ile üretin</span>
               </div>
             </div>
           </div>
         </div>
 
-        <div class="card bg-base-100 shadow-sm lg:col-span-2">
-          <div class="card-body">
-            <div v-if="!selectedSessionId" class="text-sm opacity-70">
-              Soldan bir oturum seç.
+        <!-- Session Detail Card -->
+        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden lg:col-span-2">
+          <div v-if="!selectedSessionId" class="h-full flex items-center justify-center p-12">
+            <div class="text-center">
+              <div class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122" />
+                </svg>
+              </div>
+              <h3 class="text-lg font-semibold text-gray-800 mb-2">Oturum Seçin</h3>
+              <p class="text-gray-500 text-sm">Soldaki listeden detaylarını görmek istediğiniz oturumu seçin</p>
             </div>
+          </div>
 
-            <div v-else>
-              <div class="flex items-start justify-between gap-4">
-                <div>
-                  <h2 class="card-title">
-                    Oturum #{{ selectedSessionId }}
-                    <span class="badge" :class="sessionDetail?.is_open ? 'badge-success' : 'badge-ghost'">
-                      {{ sessionDetail?.is_open ? "Açık" : "Kapalı" }}
-                    </span>
-                  </h2>
-                  <p class="text-xs opacity-70">
-                    {{ sessionDetail?.starts_at }} → {{ sessionDetail?.ends_at }}
-                  </p>
+          <div v-else>
+            <!-- Session Header -->
+            <div class="px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-green-50 to-transparent">
+              <div class="flex items-center justify-between gap-4 flex-wrap">
+                <div class="flex items-center gap-3">
+                  <div class="w-12 h-12 rounded-xl flex items-center justify-center" :class="sessionDetail?.is_open ? 'bg-green-100' : 'bg-gray-100'">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" :class="sessionDetail?.is_open ? 'text-green-600' : 'text-gray-500'" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path v-if="sessionDetail?.is_open" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z" />
+                      <path v-else stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <div class="flex items-center gap-2">
+                      <h2 class="font-bold text-gray-800">Oturum #{{ selectedSessionId }}</h2>
+                      <span class="badge" :class="sessionDetail?.is_open ? 'badge-success text-white' : 'badge-ghost'">
+                        {{ sessionDetail?.is_open ? "Açık" : "Kapalı" }}
+                      </span>
+                    </div>
+                    <p class="text-xs text-gray-500">{{ sessionDetail?.starts_at }} → {{ sessionDetail?.ends_at }}</p>
+                  </div>
                 </div>
 
                 <div class="flex flex-wrap gap-2">
-                  <button class="btn btn-sm" :disabled="loading" @click="toggleOpen(true)">Aç</button>
-                  <button class="btn btn-sm" :disabled="loading" @click="toggleOpen(false)">Kapat</button>
-                  <button class="btn btn-sm btn-primary" :disabled="loading" @click="refreshSelectedSession">Yenile</button>
+                  <button 
+                    class="btn btn-success btn-sm gap-1" 
+                    :disabled="loading || sessionDetail?.is_open" 
+                    @click="toggleOpen(true)"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z" />
+                    </svg>
+                    Aç
+                  </button>
+                  <button 
+                    class="btn btn-warning btn-sm gap-1" 
+                    :disabled="loading || !sessionDetail?.is_open" 
+                    @click="toggleOpen(false)"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                    Kapat
+                  </button>
+                  <button class="btn btn-ghost btn-sm gap-1" :disabled="loading" @click="refreshSelectedSession">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                    Yenile
+                  </button>
                 </div>
               </div>
+            </div>
 
-              <div class="divider my-3"></div>
+            <!-- Session Content -->
+            <div class="p-6">
+              <div class="grid gap-6 md:grid-cols-2">
+                <!-- QR Card -->
+                <div class="bg-gray-50 rounded-xl border border-gray-100 overflow-hidden">
+                  <div class="px-4 py-3 border-b border-gray-100 bg-white">
+                    <div class="flex items-center gap-2">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+                      </svg>
+                      <h3 class="font-semibold text-gray-800">QR Kodu</h3>
+                    </div>
+                  </div>
 
-              <div class="grid gap-4 md:grid-cols-2">
-                <div class="card bg-base-100">
-                  <div class="card-body">
-                    <h3 class="font-semibold">QR</h3>
-
-                    <div v-if="qrError" class="alert alert-warning">
-                      <span>{{ qrError }}</span>
+                  <div class="p-4">
+                    <div v-if="qrError" class="alert alert-warning rounded-lg mb-4">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-5 w-5" fill="none" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                      </svg>
+                      <span class="text-sm">{{ qrError }}</span>
                     </div>
 
-                    <div v-if="qr?.image_data_url" class="flex flex-col items-center gap-3">
-                      <img :src="qr.image_data_url" alt="QR" class="max-w-[320px] rounded-box bg-white p-2" />
-
-                      <div class="text-xs opacity-70 text-center">
-                        QR süresi:
-                        <b>{{ qrSecondsLeft ?? qr.expires_in }}</b> sn<br />
-                        Öğrenciler telefon kamerasıyla okutunca otomatik <code>/scan</code> ekranına gelir.<br />
-                        <span class="opacity-70">Otomatik yenileme aktif ✅</span>
+                    <div v-if="qr?.image_data_url" class="flex flex-col items-center gap-4">
+                      <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+                        <img :src="qr.image_data_url" alt="QR" class="w-full max-w-[200px]" />
                       </div>
 
-                      <button class="btn btn-sm" :disabled="loading" @click="refreshQr">QR Yenile</button>
+                      <div class="text-center space-y-2">
+                        <div class="flex items-center justify-center gap-2 text-sm">
+                          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          <span>Süre: <b class="text-primary">{{ qrSecondsLeft ?? qr.expires_in }}</b> sn</span>
+                        </div>
+                        <p class="text-xs text-gray-500">Otomatik yenileme aktif ✅</p>
+                      </div>
+
+                      <button class="btn btn-primary btn-sm w-full gap-2" :disabled="loading" @click="refreshQr">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        </svg>
+                        QR Yenile
+                      </button>
                     </div>
 
-                    <div v-else class="text-sm opacity-70">
-                      QR göstermek için oturum açık olmalı.
+                    <div v-else class="py-8 text-center">
+                      <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                        </svg>
+                      </div>
+                      <p class="text-sm text-gray-500">QR göstermek için oturumu açın</p>
                     </div>
                   </div>
                 </div>
 
-                <div class="card bg-base-100">
-                  <div class="card-body">
-                    <h3 class="font-semibold">Yoklama Kayıtları</h3>
-                    <div class="overflow-x-auto">
-                      <table class="table table-sm">
-                        <thead>
-                          <tr>
-                            <th>Öğrenci</th>
-                            <th>Durum</th>
-                            <th>Okutma</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          <tr v-for="a in sessionDetail?.attendance || []" :key="a.attendance_id">
-                            <td>
-                              <div class="font-medium">{{ a.student_name }}</div>
-                              <div class="text-xs opacity-70">{{ a.student_email }}</div>
-                            </td>
-                            <td><span class="badge badge-outline">{{ a.status }}</span></td>
-                            <td class="text-xs opacity-70">{{ a.scanned_at || "-" }}</td>
-                          </tr>
-                          <tr v-if="(sessionDetail?.attendance || []).length === 0">
-                            <td colspan="3" class="text-center text-sm opacity-70">Henüz yoklama yok.</td>
-                          </tr>
-                        </tbody>
-                      </table>
+                <!-- Attendance Card -->
+                <div class="bg-gray-50 rounded-xl border border-gray-100 overflow-hidden">
+                  <div class="px-4 py-3 border-b border-gray-100 bg-white">
+                    <div class="flex items-center justify-between">
+                      <div class="flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <h3 class="font-semibold text-gray-800">Yoklama Kayıtları</h3>
+                      </div>
+                      <span class="badge badge-primary">{{ (sessionDetail?.attendance || []).length }}</span>
+                    </div>
+                  </div>
+
+                  <div class="p-4 max-h-[400px] overflow-auto">
+                    <div v-if="(sessionDetail?.attendance || []).length === 0" class="py-8 text-center">
+                      <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                        </svg>
+                      </div>
+                      <p class="text-sm text-gray-500">Henüz yoklama kaydı yok</p>
+                    </div>
+
+                    <div v-else class="space-y-2">
+                      <div 
+                        v-for="a in sessionDetail?.attendance || []" 
+                        :key="a.attendance_id"
+                        class="bg-white rounded-lg p-3 border border-gray-100 hover:border-gray-200 transition-colors"
+                      >
+                        <div class="flex items-center justify-between gap-3">
+                          <div class="flex items-center gap-3 min-w-0">
+                            <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center shrink-0">
+                              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                              </svg>
+                            </div>
+                            <div class="min-w-0">
+                              <div class="font-medium text-gray-800 truncate">{{ a.student_name }}</div>
+                              <div class="text-xs text-gray-500 truncate">{{ a.student_email }}</div>
+                            </div>
+                          </div>
+                          <div class="text-right shrink-0">
+                            <span class="badge badge-success badge-outline text-xs">{{ a.status }}</span>
+                            <div class="text-xs text-gray-400 mt-1">{{ a.scanned_at || "-" }}</div>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
-
-
             </div>
           </div>
         </div>

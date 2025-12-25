@@ -166,6 +166,99 @@
         </div>
       </div>
 
+      <!-- Announcement Card -->
+      <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-amber-50 to-transparent">
+          <div class="flex items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+              <div class="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
+                </svg>
+              </div>
+              <div>
+                <h2 class="text-lg font-bold text-gray-800">Duyurular</h2>
+                <p class="text-xs text-gray-500">Dersi alan öğrencilere duyuru yapabilirsiniz</p>
+              </div>
+            </div>
+            <span class="badge badge-warning badge-outline">{{ announcements.length }} duyuru</span>
+          </div>
+        </div>
+
+        <div class="p-6">
+          <!-- Add Announcement Form -->
+          <div class="grid gap-4 md:grid-cols-3">
+            <div class="form-control">
+              <label class="label pb-1">
+                <span class="label-text font-medium text-gray-700">Başlık</span>
+              </label>
+              <input 
+                class="input input-bordered w-full h-12 rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20" 
+                type="text" 
+                v-model="annTitle" 
+                placeholder="Örn: Ders iptali" 
+              />
+            </div>
+
+            <div class="form-control">
+              <label class="label pb-1">
+                <span class="label-text font-medium text-gray-700">Açıklama (opsiyonel)</span>
+              </label>
+              <input 
+                class="input input-bordered w-full h-12 rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20" 
+                type="text" 
+                v-model="annContent" 
+                placeholder="Duyuru detayı..." 
+              />
+            </div>
+
+            <div class="flex items-end">
+              <button class="btn btn-warning w-full h-12 rounded-xl gap-2" :disabled="loading || !annTitle.trim()" @click="addAnnouncement">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                </svg>
+                Duyuru Ekle
+              </button>
+            </div>
+          </div>
+
+          <!-- Announcements List -->
+          <div v-if="announcements.length > 0" class="mt-6 space-y-3">
+            <div 
+              v-for="ann in announcements" 
+              :key="ann.id"
+              class="bg-amber-50 rounded-xl p-4 border border-amber-100"
+            >
+              <div class="flex items-start justify-between gap-3">
+                <div class="flex-1 min-w-0">
+                  <h4 class="font-semibold text-gray-800">{{ ann.title }}</h4>
+                  <p v-if="ann.content" class="text-sm text-gray-600 mt-1">{{ ann.content }}</p>
+                  <p class="text-xs text-gray-400 mt-2">{{ formatDT(ann.created_at) }}</p>
+                </div>
+                <button 
+                  class="btn btn-ghost btn-sm text-error hover:bg-error/10" 
+                  :disabled="loading" 
+                  @click="deleteAnnouncement(ann.id)"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div v-else class="mt-6 text-center py-6">
+            <div class="flex flex-col items-center gap-2 text-gray-400">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
+              </svg>
+              <span class="text-sm">Henüz duyuru yok</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Sessions Grid -->
       <div class="grid gap-6 lg:grid-cols-3">
         <!-- Sessions List Card -->
@@ -470,6 +563,55 @@ const mpWeekday = ref<number>(0);
 const mpStart = ref<string>("10:00");
 const mpEnd = ref<string>("11:00");
 
+// Announcements
+const announcements = ref<any[]>([]);
+const annTitle = ref<string>("");
+const annContent = ref<string>("");
+
+async function loadAnnouncements() {
+  try {
+    const api = await getApi();
+    const resp = await api.get(`/api/instructor/offerings/${offeringId.value}/announcements`);
+    announcements.value = resp.data.items || [];
+  } catch (e) {
+    console.error("Duyurular yüklenemedi", e);
+  }
+}
+
+async function addAnnouncement() {
+  if (!annTitle.value.trim()) return;
+  loading.value = true;
+  errorMsg.value = null;
+  try {
+    const api = await getApi();
+    await api.post(`/api/instructor/offerings/${offeringId.value}/announcements`, {
+      title: annTitle.value.trim(),
+      content: annContent.value.trim(),
+    });
+    annTitle.value = "";
+    annContent.value = "";
+    await loadAnnouncements();
+  } catch (e: any) {
+    errorMsg.value = String(e?.response?.data?.details || e?.response?.data?.error || e?.message || "Duyuru eklenemedi");
+  } finally {
+    loading.value = false;
+  }
+}
+
+async function deleteAnnouncement(id: number) {
+  loading.value = true;
+  errorMsg.value = null;
+  try {
+    const api = await getApi();
+    await api.delete(`/api/instructor/announcements/${id}`);
+    await loadAnnouncements();
+  } catch (e: any) {
+    errorMsg.value = String(e?.response?.data?.details || e?.response?.data?.error || e?.message || "Duyuru silinemedi");
+  } finally {
+    loading.value = false;
+  }
+}
+
 function weekdayLabel(w: number) {
   return ["Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi", "Pazar"][w] || String(w);
 }
@@ -636,6 +778,7 @@ async function refreshAll() {
     await loadOfferingTitle();
     await loadMeetingPatterns();
     await loadSessions();
+    await loadAnnouncements();
     if (selectedSessionId.value) await refreshSelectedSession();
   } catch (e: any) {
     errorMsg.value = String(e?.response?.data?.details || e?.response?.data?.error || e?.message || "Yüklenemedi");

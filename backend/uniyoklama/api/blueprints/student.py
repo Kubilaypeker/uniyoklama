@@ -9,7 +9,7 @@ from flask_jwt_extended import get_jwt_identity
 from ..rbac import require_roles
 from ..responses import error_response
 from ...extensions import db
-from ...models import Attendance, AttendanceStatus, ClassSession, Enrollment
+from ...models import Attendance, AttendanceStatus, ClassSession, Enrollment, Announcement, CourseOffering
 from ...schemas import ScanAttendanceSchema, AttendanceSchema
 from ...utils.qr import decode_qr_token, QRTokenError
 from ...utils.geofence import check_geofence
@@ -140,3 +140,43 @@ def history():
         for a in rows
     ]
     return jsonify({"items": data})
+
+
+@bp.get("/announcements")
+@require_roles("STUDENT")
+def student_announcements():
+    """Öğrencinin kayıtlı olduğu derslerin duyurularını getir"""
+    uid = int(get_jwt_identity())
+
+    # Öğrencinin kayıtlı olduğu dersleri bul
+    enrolled_offering_ids = db.session.execute(
+        db.select(Enrollment.offering_id).where(Enrollment.student_id == uid)
+    ).scalars().all()
+
+    if not enrolled_offering_ids:
+        return jsonify({"items": []})
+
+    # Bu derslerin aktif duyurularını getir
+    announcements = db.session.execute(
+        db.select(Announcement, CourseOffering)
+        .join(CourseOffering, CourseOffering.id == Announcement.offering_id)
+        .where(
+            Announcement.offering_id.in_(enrolled_offering_ids),
+            Announcement.is_active == True
+        )
+        .order_by(Announcement.created_at.desc())
+        .limit(20)
+    ).all()
+
+    items = [
+        {
+            "id": a.id,
+            "title": a.title,
+            "content": a.content,
+            "created_at": a.created_at.isoformat(),
+            "course_code": o.course.code if o.course else "",
+            "course_title": o.course.title if o.course else "",
+        }
+        for a, o in announcements
+    ]
+    return jsonify({"items": items})

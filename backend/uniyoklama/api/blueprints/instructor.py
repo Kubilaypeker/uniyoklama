@@ -17,6 +17,7 @@ from ...models import (
     Attendance,
     User,
     MeetingPattern,
+    Announcement,
 )
 from ...schemas import InstructorSessionDetailSchema, QRResponseSchema
 from ...utils.qr import create_qr_token, make_qr_png_bytes, png_bytes_to_data_url
@@ -348,3 +349,127 @@ def session_qr(session_id: int):
         "image_data_url": data_url,
     }
     return jsonify({"qr": QRResponseSchema().dump(payload)})
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# DUYURU (Announcement) ENDPOINTLERİ
+# ─────────────────────────────────────────────────────────────────────────────
+
+@bp.get("/offerings/<int:offering_id>/announcements")
+@require_roles("INSTRUCTOR")
+def list_announcements(offering_id: int):
+    """Derse ait tüm duyuruları listele"""
+    instructor_id = int(get_jwt_identity())
+    if not _ensure_instructor_owns_offering(instructor_id, offering_id):
+        return error_response("FORBIDDEN", "Bu ders/şube size ait değil.", 403)
+
+    announcements = db.session.execute(
+        db.select(Announcement)
+        .where(Announcement.offering_id == offering_id)
+        .order_by(Announcement.created_at.desc())
+    ).scalars().all()
+
+    items = [
+        {
+            "id": a.id,
+            "title": a.title,
+            "content": a.content,
+            "created_at": a.created_at.isoformat(),
+            "is_active": a.is_active,
+        }
+        for a in announcements
+    ]
+    return jsonify({"items": items})
+
+
+@bp.post("/offerings/<int:offering_id>/announcements")
+@require_roles("INSTRUCTOR")
+def create_announcement(offering_id: int):
+    """Yeni duyuru oluştur"""
+    instructor_id = int(get_jwt_identity())
+    if not _ensure_instructor_owns_offering(instructor_id, offering_id):
+        return error_response("FORBIDDEN", "Bu ders/şube size ait değil.", 403)
+
+    data = request.get_json(silent=True) or {}
+    title = (data.get("title") or "").strip()
+    content = (data.get("content") or "").strip()
+
+    if not title:
+        return error_response("VALIDATION_ERROR", {"title": ["Başlık gerekli."]}, 400)
+
+    announcement = Announcement(
+        offering_id=offering_id,
+        instructor_id=instructor_id,
+        title=title,
+        content=content,
+    )
+    db.session.add(announcement)
+    db.session.commit()
+
+    return jsonify({
+        "ok": True,
+        "announcement": {
+            "id": announcement.id,
+            "title": announcement.title,
+            "content": announcement.content,
+            "created_at": announcement.created_at.isoformat(),
+        }
+    })
+
+
+@bp.delete("/announcements/<int:announcement_id>")
+@require_roles("INSTRUCTOR")
+def delete_announcement(announcement_id: int):
+    """Duyuruyu sil"""
+    instructor_id = int(get_jwt_identity())
+    announcement = db.session.get(Announcement, announcement_id)
+
+    if not announcement:
+        return error_response("NOT_FOUND", "Duyuru bulunamadı.", 404)
+    if not _ensure_instructor_owns_offering(instructor_id, int(announcement.offering_id)):
+        return error_response("FORBIDDEN", "Bu duyuru size ait değil.", 403)
+
+    db.session.delete(announcement)
+    db.session.commit()
+    return jsonify({"ok": True})
+
+
+@bp.get("/announcements")
+@require_roles("INSTRUCTOR")
+def my_announcements():
+    """Öğretim görevlisinin tüm derslerindeki duyuruları getir"""
+    instructor_id = int(get_jwt_identity())
+
+    # Öğretim görevlisinin derslerinin ID'lerini bul
+    offering_ids = db.session.execute(
+        db.select(OfferingInstructor.offering_id).where(
+            OfferingInstructor.instructor_id == instructor_id
+        )
+    ).scalars().all()
+
+    if not offering_ids:
+        return jsonify({"items": []})
+
+    # Bu derslerin duyurularını getir
+    announcements = db.session.execute(
+        db.select(Announcement, CourseOffering)
+        .join(CourseOffering, CourseOffering.id == Announcement.offering_id)
+        .where(Announcement.offering_id.in_(offering_ids))
+        .order_by(Announcement.created_at.desc())
+        .limit(50)
+    ).all()
+
+    items = [
+        {
+            "id": a.id,
+            "title": a.title,
+            "content": a.content,
+            "created_at": a.created_at.isoformat(),
+            "is_active": a.is_active,
+            "course_code": o.course.code if o.course else "",
+            "course_title": o.course.title if o.course else "",
+        }
+        for a, o in announcements
+    ]
+    return jsonify({"items": items})
+

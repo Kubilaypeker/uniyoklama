@@ -145,12 +145,18 @@ async function onLogin() {
     const next = typeof route.query.next === "string" ? route.query.next : "/";
     router.push(next);
   } catch (e: any) {
-    const msg =
-      e?.response?.data?.details ||
-      e?.response?.data?.error ||
-      e?.message ||
-      "Giriş başarısız.";
-    errorMsg.value = String(msg);
+    // Tüm hata durumlarında tutarlı mesaj
+    const status = e?.response?.status;
+    
+    if (status === 401 || status === 400) {
+      errorMsg.value = "E-posta veya şifre hatalı. Lütfen bilgilerinizi kontrol edin.";
+    } else if (status === 404) {
+      errorMsg.value = "Bu e-posta adresi ile kayıtlı kullanıcı bulunamadı.";
+    } else if (e?.code === "ERR_NETWORK" || e?.message?.includes("Network") || !e?.response) {
+      errorMsg.value = "Sunucuya bağlanılamadı. Lütfen internet bağlantınızı kontrol edin.";
+    } else {
+      errorMsg.value = "Giriş başarısız. Lütfen bilgilerinizi kontrol edip tekrar deneyin.";
+    }
   } finally {
     loading.value = false;
   }

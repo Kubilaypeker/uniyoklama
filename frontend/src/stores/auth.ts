@@ -11,12 +11,16 @@ export type User = {
 
 export const useAuthStore = defineStore("auth", () => {
   const user = ref<User | null>(null);
-  const isAuthenticated = computed(() => !!localStorage.getItem("access_token"));
+  const token = ref<string | null>(localStorage.getItem("access_token"));
+
+  const isAuthenticated = computed(() => !!token.value);
 
   async function login(email: string, password: string) {
     const api = await getApi();
     const resp = await api.post("/api/auth/login", { email, password });
-    localStorage.setItem("access_token", resp.data.access_token);
+    const accessToken = resp.data.access_token;
+    localStorage.setItem("access_token", accessToken);
+    token.value = accessToken;
     user.value = resp.data.user as User;
   }
 
@@ -28,6 +32,7 @@ export const useAuthStore = defineStore("auth", () => {
 
   function logout() {
     localStorage.removeItem("access_token");
+    token.value = null;
     user.value = null;
   }
 

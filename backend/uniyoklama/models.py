@@ -172,3 +172,21 @@ class Attendance(db.Model):
     __table_args__ = (
         UniqueConstraint("session_id", "student_id", name="uq_attendance_session_student"),
     )
+
+
+class Announcement(db.Model):
+    """Ders duyurusu - Hocaların öğrencilere duyuru yapabilmesi için"""
+    __tablename__ = "announcements"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    offering_id: Mapped[int] = mapped_column(ForeignKey("course_offerings.id", ondelete="CASCADE"))
+    instructor_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
+
+    title: Mapped[str] = mapped_column(default="")
+    content: Mapped[str] = mapped_column(default="")
+
+    created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow)
+    is_active: Mapped[bool] = mapped_column(default=True)
+
+    offering = relationship("CourseOffering")
+    instructor = relationship("User")

@@ -63,4 +63,8 @@ def create_app(cfg_path: str = "config.cfg") -> Flask:
 
     register_commands(app)
 
+    # Otomatik tablo oluşturma
+    with app.app_context():
+        db.create_all()
+
     return app
